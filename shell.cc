@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <string>
 #include "shell.hh"
 
 int yyparse(void);
@@ -10,6 +11,8 @@ int yyparse(void);
 bool commandRunning = false;
 
 bool Shell::promptNeeded = false;
+bool Shell::_isTerminal = false;  // 添加静态成员初始化
+std::string Shell::_shellPath = "";  // Shell路径初始化
 
 // SIGINT信号处理函数
 void sigintHandler(int sig) {
@@ -48,12 +51,18 @@ bool Shell::isTerminal() {
 
 void Shell::prompt() {
     if (isatty(0)) {  // 只有当输入来自终端时才显示提示符
+        _isTerminal = true;
         printf("myshell>");
         fflush(stdout);
+    } else {
+        _isTerminal = false;
     }
 }
 
-int main() {
+int main(int argc, char **argv) {
+    // 保存shell可执行文件路径
+    Shell::_shellPath = argv[0];
+    
     // 设置SIGINT信号处理
     struct sigaction sa;
     sa.sa_handler = sigintHandler;
